@@ -128,7 +128,7 @@ If the prefix is "Novel_loci_", it means a novel genic locus
 
 (19) Exon end site set
 
-(20-27) Genic structue of first part of fusion transcript:
+(20-27) Genic structue of second part of fusion transcript:
 
 (20) Chromosome
 
