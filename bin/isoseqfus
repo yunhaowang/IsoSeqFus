@@ -1,0 +1,118 @@
+#!/usr/bin/env python
+import argparse, sys, os, time
+from subprocess import call
+from multiprocessing import cpu_count
+
+def main():
+	args = do_inputs()
+	tempdir = setup_tempdir(args.tempdir)
+	udir = os.path.dirname(os.path.realpath(__file__)) + "/../utilities"
+	sys.stdout.write("<<Welcome to use IsoSeqFus>>\n\n###Start IsoSeqFus running at: " + time.strftime("%a,%d %b %Y %H:%M:%S") + "\n\n")
+	
+	sys.stdout.write("## Step1: convert GTF to GPD, then sort at: " + time.strftime("%a,%d %b %Y %H:%M:%S") + "\n")
+	sys.stdout.write("# Convert GTF to GPD\n")
+	sys.stdout.flush()
+	cmd1 = udir + "/py_isoseqfus_gtf2gpd.py -i " + args.annotation + " -o " + tempdir + "/isoform_annotation.gpd"
+	call(cmd1.split())
+	sys.stdout.write("# Sort GPD\n")
+	sys.stdout.flush()
+	cmd1s = "sort -k3,3 -k5,5n -k6,6n " + tempdir + "/isoform_annotation.gpd >" + tempdir + "/isoform_annotation.sort.gpd"
+	os.system(cmd1s)
+	sys.stdout.write("\n## Step2: convert SAM to GPD (PacBio Iso-Seq long read) at: " + time.strftime("%a,%d %b %Y %H:%M:%S") + "\n")
+	sys.stdout.flush()
+	cmd2 = udir + "/py_isoseqfus_sam2gpd_pacbio.py -i " + " ".join(args.long_read) + " -c " + args.primer_info + " -o " + tempdir + "/long_read.gpd" + " -p " + str(args.cpu)
+	call(cmd2.split())
+	sys.stdout.write("\n## Step3: long read alignment quality control and correction at: " + time.strftime("%a,%d %b %Y %H:%M:%S") + "\n")
+	sys.stdout.flush()
+	cmd3 = udir + "/py_isoseqfus_polish.py -t " + args.st + " --sc " + args.sc + " --hc " + args.fus_len + " -m " + args.mapq + " -p " + str(args.cpu) + " -a " + tempdir + "/isoform_annotation.sort.gpd" + " -i " + tempdir + "/long_read.gpd" + " -o " + tempdir + "/long_read.polished.gpd"
+	call(cmd3.split())
+	sys.stdout.write("\n## Step4: make fusion-specific gpd at: " + time.strftime("%a,%d %b %Y %H:%M:%S") + "\n")
+	sys.stdout.flush()
+	cmd4 = udir + "/py_isoseqfus_make_fusion_gpd.py -i " + tempdir + "/long_read.polished.gpd" + " -o " + tempdir + "/long_read.polished.fusion.gpd"
+	call(cmd4.split())
+	sys.stdout.write("\n## Step5: split fusion-specific gpd and sort at: " + time.strftime("%a,%d %b %Y %H:%M:%S") + "\n")
+	sys.stdout.flush()
+	cmd5 = udir + "/py_isoseqfus_split_fusion_gpd.py -i " + tempdir + "/long_read.polished.fusion.gpd" + " -p " + tempdir + "/isoseqfus"
+	call(cmd5.split())
+	cmd5fs = "sort -k3,3 -k4,4 -k5,5n -k6,6n " + tempdir + "/isoseqfus.FS.gpd >" + tempdir + "/isoseqfus.FS.sort.gpd"
+	cmd5ss = "sort -k3,3 -k4,4 -k5,5n -k6,6n " + tempdir + "/isoseqfus.SS.gpd >" + tempdir + "/isoseqfus.SS.sort.gpd"
+	os.system(cmd5fs)
+	os.system(cmd5ss)
+	sys.stdout.write("\n## Step6: concatenate gpd at: " + time.strftime("%a,%d %b %Y %H:%M:%S") + "\n")
+	sys.stdout.flush()
+	sys.stdout.write("# Singleton isoform (FS)\n")
+	sys.stdout.flush()
+	cmd6sgt_fs = udir + "/py_isoseqfus_concat_sgt.py -i " + tempdir + "/isoseqfus.FS.sort.gpd" + " -o " + tempdir + "/isoseqfus.FS.sort.concat.gpd"
+	call(cmd6sgt_fs.split())
+	sys.stdout.write("# Singleton isoform (SS)\n")
+	sys.stdout.flush()
+	cmd6sgt_ss = udir + "/py_isoseqfus_concat_sgt.py -i " + tempdir + "/isoseqfus.SS.sort.gpd" + " -o " + tempdir + "/isoseqfus.SS.sort.concat.gpd"
+	call(cmd6sgt_ss.split())
+	sys.stdout.write("# Multi-exon isoform (FM)\n")
+	sys.stdout.flush()
+	cmd6mlt_fm = udir + "/py_isoseqfus_concat_mlt.py -i " + tempdir + "/isoseqfus.FM.gpd" + " -o " + tempdir + "/isoseqfus.FM.concat.gpd"
+	call(cmd6mlt_fm.split())
+	sys.stdout.write("# Multi-exon isoform (SM)\n")
+	sys.stdout.flush()
+	cmd6mlt_sm = udir + "/py_isoseqfus_concat_mlt.py -i " + tempdir + "/isoseqfus.SM.gpd" + " -o " + tempdir + "/isoseqfus.SM.concat.gpd"
+	call(cmd6mlt_sm.split())
+	sys.stdout.write("\n## Step7: construct fusion isoform at: " + time.strftime("%a,%d %b %Y %H:%M:%S") + "\n")
+	sys.stdout.flush()
+	cmd7 = udir + "/py_isoseqfus_construct.py -i " + tempdir + "/long_read.polished.fusion.gpd" + " -p " + tempdir + "/isoseqfus" + " -o " + tempdir + "/long_read.polished.fusion.constr.gpd"
+	call(cmd7.split())
+	sys.stdout.write("\n## Step8: add annotation at: " + time.strftime("%a,%d %b %Y %H:%M:%S") + "\n")
+	sys.stdout.flush()
+	cmd8 = udir + "/py_isoseqfus_add_anno.py -i " + tempdir + "/long_read.polished.fusion.constr.gpd" + " -a " + tempdir + "/isoform_annotation.sort.gpd" + " -o " + tempdir + "/long_read.polished.fusion.constr.anno.gpd"
+	call(cmd8.split())
+	sys.stdout.write("\n## Step9: output identified fusion genes/isoforms at: " + time.strftime("%a,%d %b %Y %H:%M:%S") + "\n")
+	sys.stdout.write("# Generate GPD\n")
+	sys.stdout.flush()
+	cmd9 = udir + "/py_isoseqfus_generate_output.py -i " + tempdir + "/long_read.polished.fusion.constr.anno.gpd" + " -o " + args.output_gpd + " --fl_read " + args.fl_read + " --tt_read " + args.tt_read + " --chr " + args.fus_chr + " --overlap " + args.fus_overlap
+	call(cmd9.split())
+	sys.stdout.write("# Generate GTF\n")
+	sys.stdout.flush()
+	cmd9gtf = udir + "/py_isoseqfus_gpd2gtf.py -i " + args.output_gpd + " -o " + args.output_gtf
+	call(cmd9gtf.split())
+	sys.stdout.write("\n### Finish IsoSeqFus running at: " + time.strftime("%a,%d %b %Y %H:%M:%S") + "\n")
+	sys.stdout.flush()
+
+def setup_tempdir(tempd):
+	if not os.path.exists(tempd):
+		os.makedirs(tempd.rstrip('/'))
+	return tempd.rstrip('/')
+
+def do_inputs():
+	parser=argparse.ArgumentParser(description="IsoSeqCon: identify fusion genes/isoforms using PacBio Iso-Seq data",formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+	parser.add_argument('-v','--version',action='version',version='IsoSeqCon (version 0.1)')
+	
+	group1 = parser.add_argument_group('Input options')
+	group1.add_argument('-a','--annotation',type=str,required=True,help="Gene annotation file (GTF format). Note: no duplicated transcript ID from different genic loci, see README for suggestion")
+	group1.add_argument('-l','--long_read',type=str,required=True,nargs="+",help="PacBio Iso-Seq long read alignment file(s) (SAM format; multiple sam files can be as inputs split by 'space'). Note: see README for how to generate this file")
+	group1.add_argument('-c','--primer_info',type=str,required=True,help="PacBio Iso-Seq long read primer information file (CSV format). Note: see README for how to generate this file")
+
+	group2 = parser.add_argument_group('Output options')
+	group2.add_argument('--tempdir',type=str,required=True,help="Temporary directory for saving intermediate files (e.g., ./temp)")
+	group2.add_argument('--output_gpd',type=str,required=True,help="Constructed isoforms (modified GPD format). Note: see README for the format information")
+	group2.add_argument('--output_gtf',type=str,required=True,help="Constructed isoforms (GTF format). Note: see README for the format information")
+
+	group3 = parser.add_argument_group('PacBio Iso-Seq long read alignment quality control and correction options')
+	group3.add_argument('--mapq',type=str,default='0',help="Minimal MAPQ score for long read alignment [0,255]. Note: aligners (e.g., GMAP) give MAPping Quality score based on their own algorithm (shown in the MAPQ field of SAM file)")
+	group3.add_argument('--sc',type=str,default='20',help="Maximal length of soft-clipped sequence (bp) at 5'end and 3'end of long read. Note: aligners (e.g., GMAP) usually soft-clip the end sequence of the read if they cannot be aligned to reference genome (shown by 'S' in the CIGAR string of SAM file)")
+	group3.add_argument('--st',type=str,default='5',help="For the correction of spliced long read alignment, if the distance (bp) between the splice site detected by long read and the splice sites annotated by annotation library, correct it to be the nearest one annotated-by-annotation-library")
+
+	group4 = parser.add_argument_group('Fusion gene/isoform construction options')
+	group4.add_argument('--fl_read',type=str,default='0',help="Minimal count requirement of full-length long reads")
+	group4.add_argument('--tt_read',type=str,default='1',help="Minimal count requirement of total long reads (both full-length and non-full-length)")
+	group4.add_argument('--fus_len',type=str,default='200',help="Minimal length for each parts of fusion isoform")
+	group4.add_argument('--fus_chr',type=str,choices=['yes','no'],default='no',help="Exclude it if two parts of fusion transcript are from same chromosome")
+	group4.add_argument('--fus_overlap',type=str,choices=['yes','no'],default='yes',help="Exclude it if two parts of fusion transcript have any overlap")
+	
+	group5 = parser.add_argument_group('Other options')
+	group5.add_argument('--cpu',type=str,default=cpu_count(),help="Number of threads to run IsoSeqFus")
+
+	args = parser.parse_args()
+	return args
+
+if __name__=="__main__":
+	main()
+

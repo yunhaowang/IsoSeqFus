@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "../bin/isoseqfus", line 117, in <module>
+    main()
+  File "../bin/isoseqfus", line 16, in main
+    call(cmd1.split())
+  File "/Shared/Au/yunhao/Source/anaconda/lib/python2.7/subprocess.py", line 523, in call
+    return Popen(*popenargs, **kwargs).wait()
+  File "/Shared/Au/yunhao/Source/anaconda/lib/python2.7/subprocess.py", line 711, in __init__
+    errread, errwrite)
+  File "/Shared/Au/yunhao/Source/anaconda/lib/python2.7/subprocess.py", line 1343, in _execute_child
+    raise child_exception
+OSError: [Errno 2] No such file or directory
