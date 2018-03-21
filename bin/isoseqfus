@@ -83,7 +83,7 @@ def setup_tempdir(tempd):
 
 def do_inputs():
 	parser=argparse.ArgumentParser(description="IsoSeqCon: identify fusion genes/isoforms using PacBio Iso-Seq data",formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-	parser.add_argument('-v','--version',action='version',version='IsoSeqCon (version 0.1)')
+	parser.add_argument('-v','--version',action='version',version='IsoSeqCon (version 0.2)')
 	
 	group1 = parser.add_argument_group('Input options')
 	group1.add_argument('-a','--annotation',type=str,required=True,help="Gene annotation file (GTF format). Note: no duplicated transcript ID from different genic loci, see README for suggestion")
@@ -101,7 +101,7 @@ def do_inputs():
 	group3.add_argument('--st',type=str,default='5',help="For the correction of spliced long read alignment, if the distance (bp) between the splice site detected by long read and the splice sites annotated by annotation library, correct it to be the nearest one annotated-by-annotation-library")
 
 	group4 = parser.add_argument_group('Fusion gene/isoform construction options')
-	group4.add_argument('--fl_read',type=str,default='0',help="Minimal count requirement of full-length long reads")
+	group4.add_argument('--fl_read',type=str,default='1',help="Minimal count requirement of full-length long reads")
 	group4.add_argument('--tt_read',type=str,default='1',help="Minimal count requirement of total long reads (both full-length and non-full-length)")
 	group4.add_argument('--fus_len',type=str,default='200',help="Minimal length for each parts of fusion isoform")
 	group4.add_argument('--fus_chr',type=str,choices=['yes','no'],default='no',help="Exclude it if two parts of fusion transcript are from same chromosome")
