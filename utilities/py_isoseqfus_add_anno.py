@@ -44,72 +44,79 @@ def determine_derived_loci(gpd_info_list,dic_chr_iso_spliceSite,dic_chr_iso_info
 	tss = min([int(i) for i in tss_set.split("|")])
 	tts = max([int(i) for i in tts_set.split("|")])
 	if int(exon_number) == 1: # singleton alignemt
-		dic_over_pct = {}
-		for iso in dic_chr_iso_info[chr]["iso_list"]:
-			if int(tts) <= int(dic_chr_iso_info[chr][iso].split("&")[1]): # break the loop when the TTS of reads is < the TSS of annotation
-				break
-			else:
-				if int(tss) < int(dic_chr_iso_info[chr][iso].split("&")[2]) and int(tts) > int(dic_chr_iso_info[chr][iso].split("&")[1]): # with overlap
-					over_pct = float(min(int(tts),int(dic_chr_iso_info[chr][iso].split("&")[2]))-max(int(tss),int(dic_chr_iso_info[chr][iso].split("&")[1])))/(int(tts)-int(tss))
-					if over_pct not in dic_over_pct.keys(): # collect isoforms with overlap
-						dic_over_pct[over_pct] = []
-						dic_over_pct[over_pct].append(iso)
-					else:
-						dic_over_pct[over_pct].append(iso)
-		if dic_over_pct != {}: # choose the maximal overlap
-			gene_over_set = set()
-			max_pct = max(dic_over_pct.keys())
-			derived_iso = ",".join(dic_over_pct[max_pct])
-			for iso in dic_over_pct[max_pct]:
-				gene_over_set.add(dic_chr_iso_info[chr][iso].split("&")[0])
-			derived_gene = ",".join(list(gene_over_set))
-		else: # no overlap
-			derived_iso = "Novel_loci_" + "_".join([chr,str(tss),str(tts)])
-			derived_gene = derived_iso
-	else: # spliced alignment
-		splice_site_list = exon_start.split(",")[1:-1]+exon_end.split(",")[:-2]
-		if chr in dic_chr_iso_spliceSite.keys():
+		if chr in dic_chr_iso_info.keys():
 			dic_over_pct = {}
-			dic_intersect_num = {}
 			for iso in dic_chr_iso_info[chr]["iso_list"]:
 				if int(tts) <= int(dic_chr_iso_info[chr][iso].split("&")[1]): # break the loop when the TTS of reads is < the TSS of annotation
 					break
 				else:
-	
 					if int(tss) < int(dic_chr_iso_info[chr][iso].split("&")[2]) and int(tts) > int(dic_chr_iso_info[chr][iso].split("&")[1]): # with overlap
-						intersect_num = len(set(splice_site_list).intersection(dic_chr_iso_spliceSite[chr][iso])) # splice site
-						if intersect_num not in dic_intersect_num.keys(): # test if splice sites are included by annotated isoforms
-							dic_intersect_num[intersect_num] = []
-							dic_intersect_num[intersect_num].append(iso)
-						else:
-							dic_intersect_num[intersect_num].append(iso)
 						over_pct = float(min(int(tts),int(dic_chr_iso_info[chr][iso].split("&")[2]))-max(int(tss),int(dic_chr_iso_info[chr][iso].split("&")[1])))/(int(tts)-int(tss))
-						if over_pct not in dic_over_pct.keys(): # overlap percentage
+						if over_pct not in dic_over_pct.keys(): # collect isoforms with overlap
 							dic_over_pct[over_pct] = []
 							dic_over_pct[over_pct].append(iso)
 						else:
 							dic_over_pct[over_pct].append(iso)
-			if dic_intersect_num != {} and max(dic_intersect_num.keys()) != 0: # splice sites are included by known isoforms
-				derived_iso = ",".join(dic_intersect_num[max(dic_intersect_num.keys())])
-				derived_gene_set = set()
-				for iso in dic_intersect_num[max(dic_intersect_num.keys())]:
-					derived_gene_set.add(dic_chr_iso_info[chr][iso].split("&")[0])	
-				derived_gene = ",".join(list(derived_gene_set))
-			else: # splice sites are not included by any known isoform
-				if dic_over_pct != {}: # choose the maximal overlap
-					gene_over_set = set()
-					max_pct = max(dic_over_pct.keys())
-					derived_iso = ",".join(dic_over_pct[max_pct])
-					for iso in dic_over_pct[max_pct]:
-						gene_over_set.add(dic_chr_iso_info[chr][iso].split("&")[0])
-					derived_gene = ",".join(list(gene_over_set))
-				else: # no overlap
-					derived_iso = "Novel_loci_" + "_".join([chr,str(tss),str(tts)])
-					derived_gene = derived_iso
+			if dic_over_pct != {}: # choose the maximal overlap
+				gene_over_set = set()
+				max_pct = max(dic_over_pct.keys())
+				derived_iso = ",".join(dic_over_pct[max_pct])
+				for iso in dic_over_pct[max_pct]:
+					gene_over_set.add(dic_chr_iso_info[chr][iso].split("&")[0])
+				derived_gene = ",".join(list(gene_over_set))
+			else: # no overlap
+				derived_iso = "Novel_loci_" + "_".join([chr,str(tss),str(tts)])
+				derived_gene = derived_iso
 		else:
 			derived_iso = "Novel_loci_" + "_".join([chr,str(tss),str(tts)])
 			derived_gene = derived_iso
-
+	else: # spliced alignment
+		if chr in dic_chr_iso_info.keys():
+			splice_site_list = exon_start.split(",")[1:-1]+exon_end.split(",")[:-2]
+			if chr in dic_chr_iso_spliceSite.keys():
+				dic_over_pct = {}
+				dic_intersect_num = {}
+				for iso in dic_chr_iso_info[chr]["iso_list"]:
+					if int(tts) <= int(dic_chr_iso_info[chr][iso].split("&")[1]): # break the loop when the TTS of reads is < the TSS of annotation
+						break
+					else:
+		
+						if int(tss) < int(dic_chr_iso_info[chr][iso].split("&")[2]) and int(tts) > int(dic_chr_iso_info[chr][iso].split("&")[1]): # with overlap
+							intersect_num = len(set(splice_site_list).intersection(dic_chr_iso_spliceSite[chr][iso])) # splice site
+							if intersect_num not in dic_intersect_num.keys(): # test if splice sites are included by annotated isoforms
+								dic_intersect_num[intersect_num] = []
+								dic_intersect_num[intersect_num].append(iso)
+							else:
+								dic_intersect_num[intersect_num].append(iso)
+							over_pct = float(min(int(tts),int(dic_chr_iso_info[chr][iso].split("&")[2]))-max(int(tss),int(dic_chr_iso_info[chr][iso].split("&")[1])))/(int(tts)-int(tss))
+							if over_pct not in dic_over_pct.keys(): # overlap percentage
+								dic_over_pct[over_pct] = []
+								dic_over_pct[over_pct].append(iso)
+							else:
+								dic_over_pct[over_pct].append(iso)
+				if dic_intersect_num != {} and max(dic_intersect_num.keys()) != 0: # splice sites are included by known isoforms
+					derived_iso = ",".join(dic_intersect_num[max(dic_intersect_num.keys())])
+					derived_gene_set = set()
+					for iso in dic_intersect_num[max(dic_intersect_num.keys())]:
+						derived_gene_set.add(dic_chr_iso_info[chr][iso].split("&")[0])	
+					derived_gene = ",".join(list(derived_gene_set))
+				else: # splice sites are not included by any known isoform
+					if dic_over_pct != {}: # choose the maximal overlap
+						gene_over_set = set()
+						max_pct = max(dic_over_pct.keys())
+						derived_iso = ",".join(dic_over_pct[max_pct])
+						for iso in dic_over_pct[max_pct]:
+							gene_over_set.add(dic_chr_iso_info[chr][iso].split("&")[0])
+						derived_gene = ",".join(list(gene_over_set))
+					else: # no overlap
+						derived_iso = "Novel_loci_" + "_".join([chr,str(tss),str(tts)])
+						derived_gene = derived_iso
+			else:
+				derived_iso = "Novel_loci_" + "_".join([chr,str(tss),str(tts)])
+				derived_gene = derived_iso
+		else:
+			derived_iso = "Novel_loci_" + "_".join([chr,str(tss),str(tts)])
+			derived_gene = derived_iso
 	return derived_gene,derived_iso
 
 def add_anno(fusion_gpd,output_gpd,dic_chr_iso_spliceSite,dic_chr_iso_info):

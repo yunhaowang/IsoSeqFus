@@ -9,7 +9,7 @@ def main(args):
 	gpd_file = args.output
 	p = Pool(processes=args.cpu)
 	csize = 1000
-	results = p.imap(func=convert,iterable=generate_tx(args.input,f1p1t1,f1p0t1,f1p1t0,f1p0t0,f0p1t1,f0p0t1,f0p1t0,f0p0t0),chunksize=csize)
+	results = p.imap(func=convert,iterable=generate_tx(args.input),chunksize=csize)
 	for res in results:
 		if not res: continue
 		gpd_file.write(res+"\n")
@@ -18,6 +18,7 @@ def main(args):
 	sys.stdout.flush()
 
 def parse_primer_info(primer_csv_fl):
+	global f1p1t1,f1p0t1,f1p1t0,f1p0t0,f0p1t1,f0p0t1,f0p1t0,f0p0t0
 	f1p1t1 = []
 	f1p0t1 = []
 	f1p1t0 = []
@@ -83,17 +84,17 @@ def extract_hard_clip_from_cigar(cigar):
 		cigar_3_h += int(s3)
 	return cigar_5_h,cigar_3_h
 
-def generate_tx(inf_list,f1p1t1,f1p0t1,f1p1t0,f1p0t0,f0p1t1,f0p0t1,f0p1t0,f0p0t0):
+def generate_tx(inf_list):
 	z = 0
 	for inf in inf_list:
 		for line in inf:
 			if line[0] == "@": continue
 			z += 1
-			yield (line,z,f1p1t1,f1p0t1,f1p1t0,f1p0t0,f0p1t1,f0p0t1,f0p1t0,f0p0t0)
+			yield (line,z)
 		inf.close()
 
 def convert(inputs):
-	(line,z,f1p1t1,f1p0t1,f1p1t0,f1p0t0,f0p1t1,f0p0t1,f0p1t0,f0p0t0) = inputs
+	(line,z) = inputs
 	qname,flag,rname,pos,mapq,cigar,rnext,pnext,tlen,seq = line.strip().split("\t")[:10]
 	tag = "\t".join(line.strip().split("\t")[11:])
 	if "H" in cigar: # hard-clipped reads

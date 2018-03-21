@@ -6,10 +6,10 @@ def main(args):
 	sys.stdout.write("Start analysis: " + time.strftime("%a,%d %b %Y %H:%M:%S") + "\n")
 	sys.stdout.flush()
 	polished_lr_file = args.output
-	dic_junction = extract_junction_from_annotation(args.anno)
+	dic_chr_type_junction = extract_junction_from_annotation(args.anno)
 	p = Pool(processes=args.cpu)
 	csize = 1000
-	results = p.imap(func=polish,iterable=generate_tx(args.input,dic_junction,args.st,args.sc,args.hc,args.mapq),chunksize=csize)
+	results = p.imap(func=polish,iterable=generate_tx(args.input,args.st,args.sc,args.hc,args.mapq),chunksize=csize)
 	for res in results:
 		if not res: continue
 		polished_lr_file.write(res+"\n")
@@ -17,14 +17,15 @@ def main(args):
 	sys.stdout.write("Finish analysis: " + time.strftime("%a,%d %b %Y %H:%M:%S") + "\n")
 	sys.stdout.flush()
 
-def generate_tx(inf,dic_junction,spiceSite_tolerance,softClip,hardClip,min_MAPQ):
+def generate_tx(inf,spiceSite_tolerance,softClip,hardClip,min_MAPQ):
 	z = 0
 	for line in inf:
 		z += 1
-		yield (line,z,dic_junction,spiceSite_tolerance,softClip,hardClip,min_MAPQ)
+		yield (line,z,spiceSite_tolerance,softClip,hardClip,min_MAPQ)
 
 #=== extract junction site from known gene annotation library ===
 def extract_junction_from_annotation(anno_file_list):
+	global dic_chr_type_junction
 	dic_chr_type_junction = {}
 	tts_list = []
 	for anno_file in anno_file_list: # multiple annotation/SR gpd files can be as input
@@ -77,11 +78,11 @@ def getNearest(x,list,tol):
 		return x
 
 def polish(inputs):
-	(line,z,dic_junction,spiceSite_tolerance,softClip,hardClip,min_MAPQ) = inputs
+	(line,z,spiceSite_tolerance,softClip,hardClip,min_MAPQ) = inputs
 	gene_id,isoform_id,chrom,strand,tss,tts,mapq,shf,exon_number,exon_start,exon_end = line.rstrip("\n").split("\t")[:11]
 	shf_list = shf.split("_")
 	if int(mapq) >= min_MAPQ and max(int(shf_list[0]),int(shf_list[1])) <= softClip and max(int(shf_list[-2]),int(shf_list[-1])) >= hardClip and (strand in ["+","-"]): # check MAPQ, soft-clip, hard-clip and strand info
-		if (chrom in dic_junction.keys()) and (int(exon_number)>1): # check if chromosome is in annotation library and exon number > 1.
+		if (chrom in dic_chr_type_junction.keys()) and (int(exon_number)>1): # check if chromosome is in annotation library and exon number > 1.
 			gpd_start = []
 			gpd_end = []
 			gpd_start.append(tss)
@@ -89,8 +90,8 @@ def polish(inputs):
 				for i in range(1,int(exon_number)):
 					p5 = int(exon_end.split(",")[i-1])
 					p3 = int(exon_start.split(",")[i])
-					p5_c = getNearest(p5,dic_junction[chrom]["sorted_plus5"],spiceSite_tolerance)
-					p3_c = getNearest(p3,dic_junction[chrom]["sorted_plus3"],spiceSite_tolerance)
+					p5_c = getNearest(p5,dic_chr_type_junction[chrom]["sorted_plus5"],spiceSite_tolerance)
+					p3_c = getNearest(p3,dic_chr_type_junction[chrom]["sorted_plus3"],spiceSite_tolerance)
 					if p3_c > p5_c:
 						gpd_start.append(str(p3_c))
 						gpd_end.append(str(p5_c))
@@ -108,8 +109,8 @@ def polish(inputs):
 				for i in range(1,int(exon_number)):
 					p5 = int(exon_end.split(",")[i-1])
 					p3 = int(exon_start.split(",")[i])
-					p5_c = getNearest(p5,dic_junction[chrom]["sorted_minus5"],spiceSite_tolerance)
-					p3_c = getNearest(p3,dic_junction[chrom]["sorted_minus3"],spiceSite_tolerance)
+					p5_c = getNearest(p5,dic_chr_type_junction[chrom]["sorted_minus5"],spiceSite_tolerance)
+					p3_c = getNearest(p3,dic_chr_type_junction[chrom]["sorted_minus3"],spiceSite_tolerance)
 					if p3_c > p5_c:
 						gpd_start.append(str(p3_c))
 						gpd_end.append(str(p5_c))
