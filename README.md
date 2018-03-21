@@ -1,4 +1,4 @@
-# IsoSeqFus (version 0.1)
+# IsoSeqFus (version 0.2)
 Time-stamp: <2018-02-06 Yunhao Wang, Email: yunhaowang@126.com>
 
 
@@ -13,16 +13,16 @@ Full-length isoform sequencing (Iso-Seq) technology originally developed by Paci
 
 - python 2.7
 
-- Numpy (tested with version 1.14.0)
+- Numpy (tested with version 1.24.0)
 
 
 ## Install and Run
 
-1. Download the package (e.g., `IsoSeqFus-0.1.tar.gz`) to a directory (e.g., `/home/`)
+1. Download the package (e.g., `IsoSeqFus-0.2.tar.gz`) to a directory (e.g., `/home/`)
 
-2. Unpack it using the command `tar -zxvf /home/IsoSeqFus-0.1.tar.gz`
+2. Unpack it using the command `tar -zxvf /home/IsoSeqFus-0.2.tar.gz`
 
-3. Now, you can run IsoSeqFus by the executable file `/home/IsoSeqFus-0.1/bin/isoseqcon`. Optional, you can add IsoSeqFus into your PATH so that you can run IsoSeqFus without having to specify the entire path. For example, you can add one line `export PATH=/home/IsoSeqFus-0.1/bin:$PATH` to your `~/.bashrc`
+3. Now, you can run IsoSeqFus by the executable file `/home/IsoSeqFus-0.2/bin/isoseqcon`. Optional, you can add IsoSeqFus into your PATH so that you can run IsoSeqFus without having to specify the entire path. For example, you can add one line `export PATH=/home/IsoSeqFus-0.2/bin:$PATH` to your `~/.bashrc`
 
 
 ## Input
@@ -59,7 +59,7 @@ Alternatively, if your data is `*.ROI.bam` format, you can use SMRT Link (v5.0.0
 
 #### Step3: separate nFLNC ROI
 
-Separate the nFLNC ROI by the script `./IsoSeqCon-0.1/utilities/py_isoseqcon_separate_nflnc_fasta.py -i ./output/nflnc.fasta -s ./output/SIRV_ROI_nflnc_sense.fasta -u ./output/SIRV_ROI_nflnc_unknown.fasta`. Now we have 3 fasta files: 1) `SIRV_ROI.flnc.fasta` (with strand information); 2) `./output/SIRV_ROI_nflnc_sense.fasta` (with strand information); and 3) `./output/SIRV_ROI_nflnc_unknown.fasta` (without strand information).
+Separate the nFLNC ROI by the script `./IsoSeqCon-0.2/utilities/py_isoseqcon_separate_nflnc_fasta.py -i ./output/nflnc.fasta -s ./output/SIRV_ROI_nflnc_sense.fasta -u ./output/SIRV_ROI_nflnc_unknown.fasta`. Now we have 3 fasta files: 1) `SIRV_ROI.flnc.fasta` (with strand information); 2) `./output/SIRV_ROI_nflnc_sense.fasta` (with strand information); and 3) `./output/SIRV_ROI_nflnc_unknown.fasta` (without strand information).
 
 #### Step4: align ROI
 
@@ -209,4 +209,4 @@ In the attribute field (9th column if split by 'tab'), there are some tag-value 
 
 ## Usage and Example
 
-`Pending`
+`./bin/isoseqfus -a example/input/SIRV_gene_annotation.gtf -l example/input/SIRV_ROI_sense.transloc -c example/input/SIRV_ROI.primer_info.csv --tempdir example/temp --output_gpd example/SIRV_test.gpd --output_gtf example/SIRV_test.gtf`
